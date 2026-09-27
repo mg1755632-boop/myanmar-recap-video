@@ -161,7 +161,7 @@ if st.session_state.translated:
         subtitle_color = st.color_picker("မြန်မာစာတန်း အရောင်", "#FFFFFF") if burn_subtitles else "#FFFFFF"
         blur_video = st.checkbox("Video blur လုပ်ရန်", value=False)
         blur_strength = st.slider("Blur အား", 1, 8, 2) if blur_video else 2
-        logo_text = st.text_input("ကိုယ်ပိုင် logo စာတန်း (ရွေးချယ်နိုင်)", placeholder="ဥပမာ - My Channel")
+        logo_text = st.text_input("ကိုယ်ပိုင် logo စာတန်း (ရွေးချယ်နိုင်)", value="MM3", help="Default logo စာသားကို MM3 ထားပေးထားပါတယ်။ လိုသလို ပြန်ပြင်နိုင်ပါတယ်။")
         logo_size = st.slider("Logo စာလုံးအရွယ်", 12, 96, 28)
         logo_opacity = st.slider("Logo မှိန်မှု", 0.05, 0.60, 0.18, 0.01, help="နည်းလေလေ ပိုမှိန်လေလေ ဖြစ်ပါတယ်။")
         logo_period = st.slider("Logo အပေါ်အောက် ရွေ့ချိန် (စက္ကန့်)", 8, 60, 24, help="တစ်ကြိမ် အပေါ်မှအောက်သို့ ဖြည်းဖြည်းရွေ့ပြီး ပြန်လည်ရွေ့မည့် အချိန်။")
