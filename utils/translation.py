@@ -25,7 +25,6 @@ def translate_segments(segments: Iterable[Mapping[str, object]], api_key: str, m
             config=types.GenerateContentConfig(
                 temperature=0.2,
                 response_mime_type="application/json",
-                response_schema=list[dict],
             ),
         )
         translated = json.loads(response.text)
