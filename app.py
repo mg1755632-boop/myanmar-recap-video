@@ -45,6 +45,7 @@ st.caption("ဗီဒီယိုကို စာသားထုတ်၊ မြ
 with st.sidebar:
     st.header("ဆက်တင်များ")
     api_key_input = st.text_input("Gemini API key (ရွေးချယ်နိုင်)", type="password", help="GEMINI_API_KEY ကို ဦးစားပေးအသုံးပြုပါသည်။ Key ကို မပြသ၊ မမှတ်တမ်းတင်ပါ။")
+    assemblyai_key_input = st.text_input("AssemblyAI API key (ရွေးချယ်နိုင်)", type="password", help="ထည့်ထားရင် AssemblyAI ကို transcription fallback အဖြစ် သုံးပါမယ်။ Key ကို မပြသ၊ မမှတ်တမ်းတင်ပါ။")
     model_name = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
     whisper_model = st.selectbox("Whisper model", ["tiny", "base", "small", "medium", "large-v3"], index=1)
     voice_name = st.selectbox("မြန်မာအသံ", list(VOICES), format_func=lambda x: VOICES[x]["label"])
@@ -103,7 +104,8 @@ if st.button("STEP 2 — Audio ထုတ်ပြီး စာသားဖော
             audio_path = st.session_state.job_dir / "original_audio.wav"
             extract_audio(st.session_state.video_path, audio_path)
             st.session_state.audio_path = audio_path
-            segments, language = transcribe_audio(audio_path, model_size=whisper_model)
+            assemblyai_key = assemblyai_key_input or os.getenv("ASSEMBLYAI_API_KEY")
+            segments, language = transcribe_audio(audio_path, model_size=whisper_model, assemblyai_api_key=assemblyai_key)
             st.session_state.segments = segments
             status.update(label=f"Transcription ပြီးပါပြီ ({language})", state="complete")
     except (VideoError, TranscriptionError) as exc:

@@ -7,6 +7,7 @@ Streamlit application for translating movie/drama recap videos into natural Myan
 - Upload MP4, MOV, MKV, and WEBM videos
 - FFmpeg audio extraction and media inspection
 - Faster-Whisper automatic language detection and timestamped transcription
+- Optional AssemblyAI transcription fallback via `ASSEMBLYAI_API_KEY`
 - Gemini Flash translation using `GEMINI_API_KEY` (never hard-coded)
 - Editable Burmese translations in a Streamlit table
 - Real Burmese Edge TTS voices: Nilar and Thiha, with speed presets
