@@ -45,7 +45,7 @@ st.caption("ဗီဒီယိုကို စာသားထုတ်၊ မြ
 with st.sidebar:
     st.header("ဆက်တင်များ")
     api_key_input = st.text_input("Gemini API key (ရွေးချယ်နိုင်)", type="password", help="GEMINI_API_KEY ကို ဦးစားပေးအသုံးပြုပါသည်။ Key ကို မပြသ၊ မမှတ်တမ်းတင်ပါ။")
-    model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    model_name = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
     whisper_model = st.selectbox("Whisper model", ["tiny", "base", "small", "medium", "large-v3"], index=1)
     voice_name = st.selectbox("မြန်မာအသံ", list(VOICES), format_func=lambda x: VOICES[x]["label"])
     speed = st.selectbox("အသံအမြန်နှုန်း", SPEEDS, format_func=lambda x: f"{x:.2f}x")

@@ -8,7 +8,7 @@
 
 ```toml
 GEMINI_API_KEY = "your-gemini-api-key"
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.8-flash"
 ```
 
 The app uses `packages.txt` to install FFmpeg. Keep the Gemini key in Secrets; do not put it in GitHub or `.env.example`.

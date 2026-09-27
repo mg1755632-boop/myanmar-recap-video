@@ -8,7 +8,7 @@ class TranslationError(RuntimeError):
     pass
 
 
-def translate_segments(segments: Iterable[Mapping[str, object]], api_key: str, model_name: str = "gemini-2.5-flash") -> list[dict]:
+def translate_segments(segments: Iterable[Mapping[str, object]], api_key: str, model_name: str = "gemini-3.8-flash") -> list[dict]:
     try:
         from google import genai
         from google.genai import types

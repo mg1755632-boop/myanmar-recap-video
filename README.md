@@ -37,7 +37,7 @@ Open `http://localhost:8501`. For Android access on the same network, open the h
 
 ## Gemini model
 
-The default is `gemini-2.5-flash`; change `GEMINI_MODEL` or the sidebar field if your account uses a different current Gemini Flash model. The app uses structured JSON output to preserve segment order and timestamps.
+The default is `gemini-3.8-flash`; set `GEMINI_MODEL` if your account uses a different current Gemini Flash model. The app uses JSON output to preserve segment order and timestamps.
 
 ## Voice note
 
