@@ -155,6 +155,8 @@ if st.session_state.translated:
     st.subheader("STEP 8 — Final MP4 ထုတ်ရန်")
     with st.expander("Final video ပြင်ဆင်မှုများ", expanded=True):
         burn_subtitles = st.checkbox("မြန်မာစာတန်းထိုး ထည့်ရန်", value=True)
+        subtitle_size = st.slider("မြန်မာစာတန်း အရွယ်", 12, 72, 32) if burn_subtitles else 32
+        subtitle_color = st.color_picker("မြန်မာစာတန်း အရောင်", "#FFFFFF") if burn_subtitles else "#FFFFFF"
         blur_video = st.checkbox("Video blur လုပ်ရန်", value=False)
         blur_strength = st.slider("Blur အား", 1, 8, 2) if blur_video else 2
         logo_text = st.text_input("ကိုယ်ပိုင် logo စာတန်း (ရွေးချယ်နိုင်)", placeholder="ဥပမာ - My Channel")
@@ -170,7 +172,7 @@ if st.session_state.translated:
                     srt_path = st.session_state.srt_path or job / "burmese_subtitles.srt"
                     srt_path.write_text(segments_to_srt(st.session_state.translated), encoding="utf-8")
                     st.session_state.srt_path = srt_path
-                    st.session_state.final_video = export_final_video(st.session_state.video_path, st.session_state.voice_path, srt_path, job / "myanmar_recap_burmese.mp4", burn_subtitles=burn_subtitles, blur_video=blur_video, blur_strength=blur_strength, logo_text=logo_text, logo_size=logo_size, logo_opacity=logo_opacity, logo_period=logo_period)
+                    st.session_state.final_video = export_final_video(st.session_state.video_path, st.session_state.voice_path, srt_path, job / "myanmar_recap_burmese.mp4", burn_subtitles=burn_subtitles, blur_video=blur_video, blur_strength=blur_strength, subtitle_size=subtitle_size, subtitle_color=subtitle_color, logo_text=logo_text, logo_size=logo_size, logo_opacity=logo_opacity, logo_period=logo_period)
             except VideoError as exc:
                 st.error(str(exc))
     download(st.session_state.final_video, "Final MP4 ဒေါင်းလုပ်", "video/mp4")

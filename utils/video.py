@@ -54,6 +54,14 @@ def _font_file() -> str | None:
     return path if path and Path(path).exists() else None
 
 
+def _ass_color(hex_color: str) -> str:
+    value = hex_color.strip().lstrip("#")
+    if len(value) != 6:
+        value = "FFFFFF"
+    red, green, blue = value[0:2], value[2:4], value[4:6]
+    return f"&H00{blue}{green}{red}"
+
+
 def export_final_video(
     video_path: str | Path,
     voice_path: str | Path,
@@ -63,6 +71,8 @@ def export_final_video(
     burn_subtitles: bool = True,
     blur_video: bool = False,
     blur_strength: int = 2,
+    subtitle_size: int = 32,
+    subtitle_color: str = "#FFFFFF",
     logo_text: str = "",
     logo_size: int = 28,
     logo_opacity: float = 0.18,
@@ -74,7 +84,8 @@ def export_final_video(
     if blur_video:
         filters.append(f"boxblur=luma_radius={max(1, int(blur_strength))}:luma_power=1")
     if burn_subtitles:
-        filters.append(f"subtitles='{_escape_filter_path(srt_path)}':charenc=UTF-8")
+        subtitle_style = f"FontName=Noto Sans Myanmar,Fontsize={max(12, int(subtitle_size))},PrimaryColour={_ass_color(subtitle_color)},OutlineColour=&H80000000,Outline=2,Shadow=1,Alignment=2,MarginV=30"
+        filters.append(f"subtitles='{_escape_filter_path(srt_path)}':charenc=UTF-8:force_style='{subtitle_style}'")
     if logo_text.strip():
         logo_file = output.parent / "logo_watermark.txt"
         logo_file.write_text(logo_text.strip(), encoding="utf-8")
