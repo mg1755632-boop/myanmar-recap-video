@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from utils.subtitles import segments_to_srt
 from utils.transcription import TranscriptionError, transcribe_audio
 from utils.translation import TranslationError, translate_segments
-from utils.tts import SPEEDS, VOICES, VoiceError, generate_voiceover
+from utils.tts import SPEEDS, VOICES, VoiceError, generate_voice_preview, generate_voiceover
 from utils.video import VideoError, export_final_video, extract_audio, get_media_info
 
 load_dotenv()
@@ -49,6 +49,19 @@ with st.sidebar:
     whisper_model = st.selectbox("Whisper model", ["tiny", "base", "small", "medium", "large-v3"], index=1)
     voice_name = st.selectbox("မြန်မာအသံ", list(VOICES), format_func=lambda x: VOICES[x]["label"])
     speed = st.selectbox("အသံအမြန်နှုန်း", SPEEDS, format_func=lambda x: f"{x:.2f}x")
+    with st.expander("အသံတစ်မျိုးချင်းစီ နားထောင်ရန်"):
+        st.caption("အသံ ၂ မျိုးသာ အမှန်တကယ်ရရှိပါတယ်။ ရွေးမချယ်မီ နမူနာနားထောင်ပါ။")
+        for preview_voice, metadata in VOICES.items():
+            st.write(metadata["label"])
+            preview_path = st.session_state.get(f"preview_{preview_voice}")
+            if st.button("▶ နားထောင်ရန်", key=f"preview_button_{preview_voice}", use_container_width=True):
+                try:
+                    preview_path = generate_voice_preview(preview_voice, WORK_ROOT / f"preview_{preview_voice}.mp3")
+                    st.session_state[f"preview_{preview_voice}"] = str(preview_path)
+                except VoiceError as exc:
+                    st.error(str(exc))
+            if preview_path and Path(preview_path).exists():
+                st.audio(preview_path, format="audio/mp3")
     if st.button("အလုပ်အသစ်စပါ", use_container_width=True):
         reset_job()
         st.rerun()

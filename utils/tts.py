@@ -24,6 +24,19 @@ async def _save(text: str, voice: str, rate: str, path: Path) -> None:
     await edge_tts.Communicate(text=text, voice=voice, rate=rate).save(str(path))
 
 
+def generate_voice_preview(voice: str, output_path: str | Path) -> Path:
+    if voice not in VOICES:
+        raise VoiceError("Unsupported Burmese voice selected.")
+    try:
+        import edge_tts  # noqa: F401
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        asyncio.run(_save("မင်္ဂလာပါ။ ဒီအသံနမူနာကို နားထောင်ပြီး အသံကို ရွေးချယ်နိုင်ပါတယ်။", voice, "+0%", output))
+        return output
+    except Exception as exc:
+        raise VoiceError(f"Voice preview failed: {exc}") from exc
+
+
 def generate_voiceover(segments: list[dict], output_path: str | Path, voice: str, speed: float) -> tuple[Path, list[str]]:
     if voice not in VOICES:
         raise VoiceError("Unsupported Burmese voice selected.")
