@@ -153,16 +153,24 @@ if st.session_state.translated:
     download(st.session_state.srt_path, "Burmese SRT ဒေါင်းလုပ်", "application/x-subrip")
 
     st.subheader("STEP 8 — Final MP4 ထုတ်ရန်")
+    with st.expander("Final video ပြင်ဆင်မှုများ", expanded=True):
+        burn_subtitles = st.checkbox("မြန်မာစာတန်းထိုး ထည့်ရန်", value=True)
+        blur_video = st.checkbox("Video blur လုပ်ရန်", value=False)
+        blur_strength = st.slider("Blur အား", 1, 8, 2) if blur_video else 2
+        logo_text = st.text_input("ကိုယ်ပိုင် logo စာတန်း (ရွေးချယ်နိုင်)", placeholder="ဥပမာ - My Channel")
+        logo_size = st.slider("Logo စာလုံးအရွယ်", 12, 96, 28)
+        logo_opacity = st.slider("Logo မှိန်မှု", 0.05, 0.60, 0.18, 0.01, help="နည်းလေလေ ပိုမှိန်လေလေ ဖြစ်ပါတယ်။")
+        logo_period = st.slider("Logo အပေါ်အောက် ရွေ့ချိန် (စက္ကန့်)", 8, 60, 24, help="တစ်ကြိမ် အပေါ်မှအောက်သို့ ဖြည်းဖြည်းရွေ့ပြီး ပြန်လည်ရွေ့မည့် အချိန်။")
     if st.button("Final MP4 ထုတ်ရန်", type="primary", use_container_width=True):
         if not st.session_state.voice_path:
             st.error("အရင်ဆုံး Burmese voice-over ဖန်တီးပါ။")
         else:
             try:
-                with st.spinner("H.264 video၊ AAC audio နှင့် burned-in subtitle encode လုပ်နေပါသည်…"):
+                with st.spinner("Video၊ subtitle၊ watermark နှင့် audio encode လုပ်နေပါသည်…"):
                     srt_path = st.session_state.srt_path or job / "burmese_subtitles.srt"
                     srt_path.write_text(segments_to_srt(st.session_state.translated), encoding="utf-8")
                     st.session_state.srt_path = srt_path
-                    st.session_state.final_video = export_final_video(st.session_state.video_path, st.session_state.voice_path, srt_path, job / "myanmar_recap_burmese.mp4")
+                    st.session_state.final_video = export_final_video(st.session_state.video_path, st.session_state.voice_path, srt_path, job / "myanmar_recap_burmese.mp4", burn_subtitles=burn_subtitles, blur_video=blur_video, blur_strength=blur_strength, logo_text=logo_text, logo_size=logo_size, logo_opacity=logo_opacity, logo_period=logo_period)
             except VideoError as exc:
                 st.error(str(exc))
     download(st.session_state.final_video, "Final MP4 ဒေါင်းလုပ်", "video/mp4")
