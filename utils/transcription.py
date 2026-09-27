@@ -13,7 +13,12 @@ def _transcribe_with_assemblyai(audio_path: str | Path, api_key: str) -> tuple[l
     except ImportError as exc:
         raise TranscriptionError("AssemblyAI fallback selected, but assemblyai is not installed.") from exc
     try:
-        aai.settings.api_key = api_key
+        clean_key = api_key.strip()
+        if clean_key.lower().startswith("bearer "):
+            clean_key = clean_key[7:].strip()
+        if not clean_key:
+            raise TranscriptionError("AssemblyAI API key is empty. Paste the raw key only; do not include 'Bearer'.")
+        aai.settings.api_key = clean_key
         transcript = aai.Transcriber().transcribe(str(audio_path))
         if transcript.status == aai.TranscriptStatus.error:
             raise TranscriptionError(f"AssemblyAI transcription failed: {transcript.error}")
@@ -40,7 +45,11 @@ def _transcribe_with_assemblyai(audio_path: str | Path, api_key: str) -> tuple[l
     except TranscriptionError:
         raise
     except Exception as exc:
-        raise TranscriptionError(f"AssemblyAI transcription failed: {exc}") from exc
+        detail = str(exc)
+        lowered = detail.lower()
+        if "401" in lowered or "unauthorized" in lowered or "api key" in lowered:
+            raise TranscriptionError("AssemblyAI key မမှန်ပါ သို့မဟုတ် သက်တမ်းကုန်ပါပြီ။ Raw API key ကိုသာ ထည့်ပါ; 'Bearer' မထည့်ပါနှင့်။") from exc
+        raise TranscriptionError(f"AssemblyAI transcription failed: {detail}") from exc
 
 
 def transcribe_audio(audio_path: str | Path, model_size: str = "base", assemblyai_api_key: str | None = None) -> tuple[list[dict], str]:
