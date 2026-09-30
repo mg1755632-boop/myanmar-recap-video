@@ -151,9 +151,9 @@ def export_final_video(
     # Ensure the final MP4 covers the entire video duration even if the voice-over is shorter.
     try:
         media_info = get_media_info(video_path)
-        video_duration = int(media_info.get("duration", 0))
+        video_duration = float(media_info.get("duration", 0) or 0.0)
     except VideoError:
-        video_duration = 0
+        video_duration = 0.0
 
     ffmpeg_cmd: list[str] = [
         "ffmpeg",
@@ -166,12 +166,21 @@ def export_final_video(
         vf,
     ]
 
-    # If we have a known video duration, pad the audio stream to at least that length using apad.
-    # apad will extend the audio with silence so the output does not stop when the audio ends.
+    # If we have a known video duration, pad the audio stream to at least that length using filter_complex.
+    # This uses apad and atrim so the audio stream will be extended with silence then trimmed to the exact duration.
     if video_duration and video_duration > 0:
-        # add audio padding filter; add a small margin (2s) to be safe for rounding
-        pad_dur = max(0, int(video_duration) + 2)
-        ffmpeg_cmd.extend(["-map", "0:v:0", "-map", "1:a:0", "-af", f"apad=pad_dur={pad_dur}"])
+        # add a small margin (1.5s) to be safe for rounding
+        pad_target = video_duration + 1.5
+        pad_target_str = f"{pad_target:.3f}"
+        # filter_complex will create a labeled padded audio stream [padded]
+        ffmpeg_cmd.extend([
+            "-filter_complex",
+            f"[1:a]apad,atrim=0:{pad_target_str}[padded]",
+            "-map",
+            "0:v:0",
+            "-map",
+            "[padded]",
+        ])
     else:
         ffmpeg_cmd.extend(["-map", "0:v:0", "-map", "1:a:0"])
 
