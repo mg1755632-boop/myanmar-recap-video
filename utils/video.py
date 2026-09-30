@@ -47,11 +47,54 @@ def _escape_filter_path(path: str | Path) -> str:
 
 
 def _font_file() -> str | None:
-    if not shutil.which("fc-match"):
-        return None
-    result = subprocess.run(["fc-match", "-f", "%{file}", "Noto Sans Myanmar"], capture_output=True, text=True)
-    path = result.stdout.strip()
-    return path if path and Path(path).exists() else None
+    candidates = [
+        "Noto Sans Myanmar",
+        "Noto Sans Myanmar UI",
+        "Myanmar3",
+        "Pyidaungsu",
+        "DejaVu Sans",
+    ]
+
+    if shutil.which("fc-match"):
+        for name in candidates:
+            result = subprocess.run(["fc-match", "-f", "%{file}", name], capture_output=True, text=True, check=False)
+            path = result.stdout.strip()
+            if path and Path(path).exists():
+                return path
+
+    for path in [
+        "/usr/share/fonts/truetype/noto/NotoSansMyanmar-Regular.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSansMyanmarUI-Regular.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+    ]:
+        if Path(path).exists():
+            return path
+
+    for font_path in sorted(Path("/usr/share/fonts").rglob("*Myanmar*.ttf")):
+        if font_path.exists():
+            return str(font_path)
+
+    for font_path in sorted(Path("/usr/share/fonts").rglob("*DejaVuSans*.ttf")):
+        if font_path.exists():
+            return str(font_path)
+
+    return None
+
+
+def _subtitle_font_name() -> str:
+    # ffmpeg's subtitles filter expects a font family name in force_style, not a file path.
+    font_file = _font_file()
+    if not font_file:
+        return "DejaVu Sans"
+
+    if "NotoSansMyanmar" in font_file or "Myanmar" in font_file:
+        return "Noto Sans Myanmar"
+    if "Pyidaungsu" in font_file:
+        return "Pyidaungsu"
+    if "DejaVuSans" in font_file:
+        return "DejaVu Sans"
+    return "DejaVu Sans"
 
 
 def _ass_color(hex_color: str) -> str:
@@ -84,7 +127,12 @@ def export_final_video(
     if blur_video:
         filters.append(f"boxblur=luma_radius={max(1, int(blur_strength))}:luma_power=1")
     if burn_subtitles:
-        subtitle_style = f"FontName=Noto Sans Myanmar,Fontsize={max(12, int(subtitle_size))},PrimaryColour={_ass_color(subtitle_color)},OutlineColour=&H80000000,Outline=2,Shadow=1,Alignment=2,MarginV=30"
+        subtitle_font = _subtitle_font_name()
+        subtitle_style = (
+            f"FontName={subtitle_font},Fontsize={max(12, int(subtitle_size))},"
+            f"PrimaryColour={_ass_color(subtitle_color)},OutlineColour=&H80000000,"
+            f"Outline=2,Shadow=1,Alignment=2,MarginV=20,Encoding=1"
+        )
         filters.append(f"subtitles='{_escape_filter_path(srt_path)}':charenc=UTF-8:force_style='{subtitle_style}'")
     if logo_text.strip():
         logo_file = output.parent / "logo_watermark.txt"
@@ -94,7 +142,54 @@ def export_final_video(
         opacity = min(1.0, max(0.05, float(logo_opacity)))
         size = max(10, int(logo_size))
         period = max(4, int(logo_period))
-        filters.append(f"drawtext=textfile='{_escape_filter_path(logo_file)}'{font_option}:fontcolor=white@{opacity}:fontsize={size}:x=(w-text_w)/2:y='(h-text_h)/2 + (h-text_h)/2*sin(2*PI*t/{period})':shadowcolor=black@0.35:shadowx=2:shadowy=2")
+        filters.append(
+            f"drawtext=textfile='{_escape_filter_path(logo_file)}'{font_option}:fontcolor=white@{opacity}:fontsize={size}:"
+            f"x=(w-text_w)/2:y='(h-text_h)/2 + (h-text_h)/2*sin(2*PI*t/{period})':shadowx=2:shadowy=2:shadowcolor=black@0.5"
+        )
     vf = ",".join(filters) if filters else "null"
-    _run(["ffmpeg", "-y", "-i", str(video_path), "-i", str(voice_path), "-vf", vf, "-map", "0:v:0", "-map", "1:a:0", "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", str(output)])
+
+    # Ensure the final MP4 covers the entire video duration even if the voice-over is shorter.
+    try:
+        media_info = get_media_info(video_path)
+        video_duration = int(media_info.get("duration", 0))
+    except VideoError:
+        video_duration = 0
+
+    ffmpeg_cmd: list[str] = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(video_path),
+        "-i",
+        str(voice_path),
+        "-vf",
+        vf,
+    ]
+
+    # If we have a known video duration, pad the audio stream to at least that length using apad.
+    # apad will extend the audio with silence so the output does not stop when the audio ends.
+    if video_duration and video_duration > 0:
+        # add audio padding filter; add a small margin (2s) to be safe for rounding
+        pad_dur = max(0, int(video_duration) + 2)
+        ffmpeg_cmd.extend(["-map", "0:v:0", "-map", "1:a:0", "-af", f"apad=pad_dur={pad_dur}"])
+    else:
+        ffmpeg_cmd.extend(["-map", "0:v:0", "-map", "1:a:0"])
+
+    ffmpeg_cmd.extend([
+        "-c:v",
+        "libx264",
+        "-preset",
+        "medium",
+        "-crf",
+        "20",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-movflags",
+        "+faststart",
+        str(output),
+    ])
+
+    _run(ffmpeg_cmd)
     return output
